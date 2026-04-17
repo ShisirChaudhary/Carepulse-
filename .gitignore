@@ -1,0 +1,18 @@
+# Dependencies and Server
+apache-tomcat-*/
+build/
+bin/
+
+# IDE Settings
+.settings/
+.vscode/
+.classpath
+.project
+.factorypath
+
+# Database
+*.sql.bak
+
+# OS Files
+Thumbs.db
+.DS_Store
