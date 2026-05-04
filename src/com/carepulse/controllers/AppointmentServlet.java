@@ -117,14 +117,18 @@ public class AppointmentServlet extends HttpServlet {
 
         // Search if keyword exists, otherwise list everything
         String search = req.getParameter("search");
+        String sort = req.getParameter("sort");
+        String dir = req.getParameter("dir");
         List<Appointment> appointments;
         if (!ValidationUtil.isEmpty(search)) {
-            appointments = appointmentService.search(search.trim());
+            appointments = appointmentService.search(search.trim(), sort, dir);
             req.setAttribute("searchKeyword", search.trim());
         } else {
-            appointments = appointmentService.getAll();
+            appointments = appointmentService.getAll(sort, dir);
         }
         req.setAttribute("appointments", appointments);
+        req.setAttribute("sortKey", sort);
+        req.setAttribute("sortDir", dir);
         req.getRequestDispatcher("/WEB-INF/pages/admin/manage-appointments.jsp").forward(req, resp);
     }
 
@@ -146,7 +150,11 @@ public class AppointmentServlet extends HttpServlet {
         }
 
         // Get the list of appointments for this patient
-        req.setAttribute("appointments", appointmentService.getByPatient(patientId));
+        String sort = req.getParameter("sort");
+        String dir = req.getParameter("dir");
+        req.setAttribute("appointments", appointmentService.getByPatient(patientId, sort, dir));
+        req.setAttribute("sortKey", sort);
+        req.setAttribute("sortDir", dir);
         req.getRequestDispatcher("/WEB-INF/pages/patient/my-appointments.jsp").forward(req, resp);
     }
 }

@@ -58,6 +58,10 @@
         <div class="auth-links">
             <a href="<%= ctx %>/login">Already have an account? Sign In</a>
         </div>
+        <div class="auth-links">
+            <a href="<%= ctx %>/about">About Us</a>
+            <a href="<%= ctx %>/contact">Contact Us</a>
+        </div>
     </div>
 </div>
 </body>

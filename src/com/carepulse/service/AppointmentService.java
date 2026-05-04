@@ -12,16 +12,22 @@ import java.util.List;
  */
 public class AppointmentService {
 
-    /**
-     * Retrieves all appointments with joined user and doctor names.
-     */
+    // Common SELECT used by getAll/search/getByPatient
+    private static final String SELECT_APPT_BASE =
+            "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, s.name AS specialization " +
+            "FROM appointments a " +
+            "JOIN users u ON a.patient_id = u.id " +
+            "JOIN doctors d ON a.doctor_id = d.id " +
+            "JOIN specializations s ON d.specialization_id = s.id ";
+
     public List<Appointment> getAll() throws Exception {
+        return getAll(null, null);
+    }
+
+    // Sortable variant. Allowed: date, patient, doctor, specialization, status.
+    public List<Appointment> getAll(String sortKey, String sortDir) throws Exception {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, d.specialization " +
-                     "FROM appointments a " +
-                     "JOIN users u ON a.patient_id = u.id " +
-                     "JOIN doctors d ON a.doctor_id = d.id " +
-                     "ORDER BY a.appointment_date DESC";
+        String sql = SELECT_APPT_BASE + buildApptOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
@@ -32,17 +38,28 @@ public class AppointmentService {
         return list;
     }
 
-    /**
-     * Searches appointments by patient name or doctor name.
-     */
+    private static String buildApptOrderBy(String sortKey, String sortDir) {
+        String dir = "desc".equalsIgnoreCase(sortDir) ? "DESC" : "ASC";
+        if (sortKey == null) return "ORDER BY a.appointment_date DESC";
+        switch (sortKey) {
+            case "date":           return "ORDER BY a.appointment_date " + dir + ", a.appointment_time " + dir;
+            case "patient":        return "ORDER BY u.full_name " + dir;
+            case "doctor":         return "ORDER BY d.full_name " + dir;
+            case "specialization": return "ORDER BY s.name " + dir + ", d.full_name ASC";
+            case "status":         return "ORDER BY a.status " + dir + ", a.appointment_date DESC";
+            default:               return "ORDER BY a.appointment_date DESC";
+        }
+    }
+
     public List<Appointment> search(String keyword) throws Exception {
+        return search(keyword, null, null);
+    }
+
+    public List<Appointment> search(String keyword, String sortKey, String sortDir) throws Exception {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, d.specialization " +
-                     "FROM appointments a " +
-                     "JOIN users u ON a.patient_id = u.id " +
-                     "JOIN doctors d ON a.doctor_id = d.id " +
+        String sql = SELECT_APPT_BASE +
                      "WHERE u.full_name LIKE ? OR d.full_name LIKE ? " +
-                     "ORDER BY a.appointment_date DESC";
+                     buildApptOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             String like = "%" + keyword + "%";
@@ -56,17 +73,15 @@ public class AppointmentService {
         return list;
     }
 
-    /**
-     * Retrieves all appointments for a specific patient.
-     */
     public List<Appointment> getByPatient(int patientId) throws Exception {
+        return getByPatient(patientId, null, null);
+    }
+
+    public List<Appointment> getByPatient(int patientId, String sortKey, String sortDir) throws Exception {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, d.specialization " +
-                     "FROM appointments a " +
-                     "JOIN users u ON a.patient_id = u.id " +
-                     "JOIN doctors d ON a.doctor_id = d.id " +
+        String sql = SELECT_APPT_BASE +
                      "WHERE a.patient_id = ? " +
-                     "ORDER BY a.appointment_date DESC";
+                     buildApptOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, patientId);

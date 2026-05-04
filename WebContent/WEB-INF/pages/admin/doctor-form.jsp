@@ -1,5 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="java.util.List" %>
 <%@ page import="com.carepulse.model.Doctor" %>
+<%@ page import="com.carepulse.model.Specialization" %>
 <%
     Doctor doctor = (Doctor) request.getAttribute("doctor");
     boolean isEdit = (doctor != null);
@@ -10,6 +12,8 @@
 
 <%
     String errorMsg = (String) request.getAttribute("error");
+    List<Specialization> specializations = (List<Specialization>) request.getAttribute("specializations");
+    int currentSpecId = isEdit ? doctor.getSpecializationId() : 0;
 %>
 
 <div class="card form-card">
@@ -33,8 +37,16 @@
             </div>
 
             <div class="form-group">
-                <label for="specialization">Specialization *</label>
-                <input type="text" id="specialization" name="specialization" value="<%= isEdit ? doctor.getSpecialization() : "" %>" required>
+                <label for="specializationId">Specialization *</label>
+                <select id="specializationId" name="specializationId" required>
+                    <option value="">-- Choose a specialization --</option>
+                    <% if (specializations != null) {
+                        for (Specialization s : specializations) {
+                            boolean selected = (s.getId() == currentSpecId); %>
+                            <option value="<%= s.getId() %>" <%= selected ? "selected" : "" %>><%= s.getName() %></option>
+                    <%  }
+                       } %>
+                </select>
             </div>
 
             <div class="form-row">
@@ -48,9 +60,9 @@
                 </div>
             </div>
 
-            <div class="form-group" style="flex-direction: row; align-items: center; gap: 0.5rem; margin-top: 1rem;">
-                <input type="checkbox" id="available" name="available" <%= (!isEdit || doctor.isAvailable()) ? "checked" : "" %> style="width: auto;">
-                <label for="available" style="margin-bottom: 0;">Currently Available for Appointments</label>
+            <div class="form-group checkbox-row">
+                <input type="checkbox" id="available" name="available" <%= (!isEdit || doctor.isAvailable()) ? "checked" : "" %>>
+                <label for="available">Currently Available for Appointments</label>
             </div>
 
             <div class="form-actions">
