@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carepulse.model.User" %>
+<%@ page import="com.carepulse.util.TableSort" %>
 <%
     request.setAttribute("pageTitle", "Manage Patients");
     request.setAttribute("activePage", "users");
@@ -11,6 +12,9 @@
     List<User> users = (List<User>) request.getAttribute("users");
     String successMsg = request.getParameter("success");
     String errorMsg = (String) request.getAttribute("error");
+    String sortKey = (String) request.getAttribute("sortKey");
+    String sortDir = (String) request.getAttribute("sortDir");
+    String userBase = ctx + "/admin?action=users&";
 %>
 
 <% if (successMsg != null && !successMsg.isEmpty()) { %>
@@ -23,6 +27,7 @@
 <div class="card">
     <div class="card-header">
         <h2>All Patients</h2>
+        <a href="<%= ctx %>/admin?action=addUser" class="btn btn-primary btn-sm" id="addPatientBtn">+ Add Patient</a>
     </div>
     <div class="card-body">
         <% if (users != null && !users.isEmpty()) { %>
@@ -31,10 +36,10 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Status</th>
+                        <th><a class="<%= TableSort.headerClass("name", sortKey) %>" href="<%= userBase %>sort=name&dir=<%= TableSort.nextDir("name", sortKey, sortDir) %>">Name<%= TableSort.indicator("name", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("email", sortKey) %>" href="<%= userBase %>sort=email&dir=<%= TableSort.nextDir("email", sortKey, sortDir) %>">Email<%= TableSort.indicator("email", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("phone", sortKey) %>" href="<%= userBase %>sort=phone&dir=<%= TableSort.nextDir("phone", sortKey, sortDir) %>">Phone<%= TableSort.indicator("phone", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("status", sortKey) %>" href="<%= userBase %>sort=status&dir=<%= TableSort.nextDir("status", sortKey, sortDir) %>">Status<%= TableSort.indicator("status", sortKey, sortDir) %></a></th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -53,6 +58,7 @@
                             <% } %>
                         </td>
                         <td class="action-btns">
+                            <a href="<%= ctx %>/admin?action=editUser&id=<%= u.getId() %>" class="btn btn-warning btn-sm">Edit</a>
                             <% if (u.isLocked()) { %>
                                 <a href="<%= ctx %>/admin?action=unlock&id=<%= u.getId() %>" class="btn btn-success btn-sm">Unlock</a>
                             <% } %>

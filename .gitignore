@@ -3,6 +3,12 @@ apache-tomcat-*/
 build/
 bin/
 
+# Compiled classes (Eclipse builds these)
+WebContent/WEB-INF/classes/
+
+# Assistant / tooling metadata
+.claude/
+
 # IDE Settings
 .settings/
 .vscode/

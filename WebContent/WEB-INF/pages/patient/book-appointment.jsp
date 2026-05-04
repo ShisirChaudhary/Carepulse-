@@ -15,6 +15,7 @@
 <%
     List<Doctor> doctors = (List<Doctor>) request.getAttribute("doctors");
     String errorMsg = (String) request.getAttribute("error");
+    String preSelectedDoctorId = request.getParameter("doctorId");
 %>
 
 <div class="card form-card">
@@ -30,11 +31,13 @@
             <div class="form-group">
                 <label for="doctorId">Select Doctor *</label>
                 <select id="doctorId" name="doctorId" required>
-                    <option value="">-- Choose a available doctor --</option>
-                    <% if (doctors != null) { 
-                        for (Doctor d : doctors) { %>
-                            <option value="<%= d.getId() %>">Dr. <%= d.getFullName() %> (<%= d.getSpecialization() %>)</option>
-                    <%  } 
+                    <option value="">-- Choose an available doctor --</option>
+                    <% if (doctors != null) {
+                        for (Doctor d : doctors) {
+                            String idStr = String.valueOf(d.getId());
+                            boolean selected = idStr.equals(preSelectedDoctorId); %>
+                            <option value="<%= idStr %>" <%= selected ? "selected" : "" %>>Dr. <%= d.getFullName() %> (<%= d.getSpecialization() %>)</option>
+                    <%  }
                        } %>
                 </select>
             </div>

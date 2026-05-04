@@ -2,6 +2,7 @@ package com.carepulse.controllers;
 
 import com.carepulse.model.Doctor;
 import com.carepulse.service.DoctorService;
+import com.carepulse.service.SpecializationService;
 import com.carepulse.util.ValidationUtil;
 
 import jakarta.servlet.ServletException;
@@ -12,13 +13,12 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-/**
- * Handles doctor CRUD operations (admin only).
- */
+// Handles doctor CRUD operations (admin only)
 @WebServlet("/admin/doctors")
 public class DoctorServlet extends HttpServlet {
 
     private final DoctorService doctorService = new DoctorService();
+    private final SpecializationService specializationService = new SpecializationService();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -27,17 +27,22 @@ public class DoctorServlet extends HttpServlet {
 
         try {
             if (action == null) {
-                // List all doctors
-                req.setAttribute("doctors", doctorService.getAll());
+                String sort = req.getParameter("sort");
+                String dir = req.getParameter("dir");
+                req.setAttribute("doctors", doctorService.getAll(sort, dir));
+                req.setAttribute("sortKey", sort);
+                req.setAttribute("sortDir", dir);
                 req.getRequestDispatcher("/WEB-INF/pages/admin/manage-doctors.jsp").forward(req, resp);
 
             } else if ("add".equals(action)) {
+                req.setAttribute("specializations", specializationService.getAll());
                 req.getRequestDispatcher("/WEB-INF/pages/admin/doctor-form.jsp").forward(req, resp);
 
             } else if ("edit".equals(action)) {
                 int id = Integer.parseInt(req.getParameter("id"));
                 Doctor doctor = doctorService.getById(id);
                 req.setAttribute("doctor", doctor);
+                req.setAttribute("specializations", specializationService.getAll());
                 req.getRequestDispatcher("/WEB-INF/pages/admin/doctor-form.jsp").forward(req, resp);
 
             } else if ("delete".equals(action)) {
@@ -60,14 +65,19 @@ public class DoctorServlet extends HttpServlet {
             throws ServletException, IOException {
         String idStr = req.getParameter("id");
         String fullName = req.getParameter("fullName");
-        String specialization = req.getParameter("specialization");
+        String specializationIdStr = req.getParameter("specializationId");
         String contact = req.getParameter("contact");
         String email = req.getParameter("email");
         String availableStr = req.getParameter("available");
 
-        // Validate required
-        if (ValidationUtil.isEmpty(fullName) || ValidationUtil.isEmpty(specialization)) {
+        // Validate required fields - both name and a chosen specialization
+        if (ValidationUtil.isEmpty(fullName) || ValidationUtil.isEmpty(specializationIdStr)) {
             req.setAttribute("error", "Name and specialization are required.");
+            try {
+                req.setAttribute("specializations", specializationService.getAll());
+            } catch (Exception ignore) {
+                // best-effort repopulation
+            }
             req.getRequestDispatcher("/WEB-INF/pages/admin/doctor-form.jsp").forward(req, resp);
             return;
         }
@@ -75,23 +85,26 @@ public class DoctorServlet extends HttpServlet {
         try {
             Doctor doctor = new Doctor();
             doctor.setFullName(fullName.trim());
-            doctor.setSpecialization(specialization.trim());
+            doctor.setSpecializationId(Integer.parseInt(specializationIdStr));
             doctor.setContact(contact != null ? contact.trim() : "");
             doctor.setEmail(email != null ? email.trim() : "");
             doctor.setAvailable(availableStr != null);
 
             if (ValidationUtil.isEmpty(idStr)) {
-                // Add new doctor
                 doctorService.add(doctor);
                 resp.sendRedirect(req.getContextPath() + "/admin/doctors?success=Doctor added successfully.");
             } else {
-                // Update existing doctor
                 doctor.setId(Integer.parseInt(idStr));
                 doctorService.update(doctor);
                 resp.sendRedirect(req.getContextPath() + "/admin/doctors?success=Doctor updated successfully.");
             }
         } catch (Exception e) {
             req.setAttribute("error", "Operation failed: " + e.getMessage());
+            try {
+                req.setAttribute("specializations", specializationService.getAll());
+            } catch (Exception ignore) {
+                // best-effort repopulation
+            }
             req.getRequestDispatcher("/WEB-INF/pages/admin/doctor-form.jsp").forward(req, resp);
         }
     }

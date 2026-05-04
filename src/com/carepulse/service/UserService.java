@@ -12,22 +12,32 @@ import java.util.UUID;
 // Handles user logic like login, registration, and auth
 public class UserService {
 
+    // SELECT prefix that joins the roles lookup so callers always get the role name
+    private static final String SELECT_USER =
+            "SELECT u.*, r.name AS role_name FROM users u " +
+            "JOIN roles r ON u.role_id = r.id";
+
+    // INSERT statement that resolves the role name to role_id via a subquery
+    private static final String INSERT_USER_AS_ROLE =
+            "INSERT INTO users (full_name, email, password, phone, role_id) " +
+            "VALUES (?, ?, ?, ?, (SELECT id FROM roles WHERE name = ?))";
+
     // New patient registration with encrypted password
     public void register(User user) throws Exception {
-        String sql = "INSERT INTO users (full_name, email, password, phone, role) VALUES (?, ?, ?, ?, 'patient')";
         try (Connection conn = DBConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(INSERT_USER_AS_ROLE)) {
             ps.setString(1, user.getFullName());
             ps.setString(2, user.getEmail());
             ps.setString(3, AESUtil.encrypt(user.getPassword()));
             ps.setString(4, user.getPhone());
+            ps.setString(5, "patient");
             ps.executeUpdate();
         }
     }
 
     // Login logic - checks email, password, and locks account after 5 tries
     public User login(String email, String rawPassword) throws Exception {
-        String sql = "SELECT * FROM users WHERE email = ?";
+        String sql = SELECT_USER + " WHERE u.email = ?";
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
@@ -39,12 +49,10 @@ public class UserService {
 
             User user = mapUser(rs);
 
-            // Check lock status
             if (user.isLocked()) {
                 throw new Exception("Account is locked due to too many failed login attempts. Contact admin.");
             }
 
-            // Decrypt stored password and compare
             String decryptedPassword = AESUtil.decrypt(user.getPassword());
             if (!decryptedPassword.equals(rawPassword)) {
                 incrementFailedAttempts(user.getId());
@@ -56,15 +64,11 @@ public class UserService {
                 return null;
             }
 
-            // Successful login — reset failed attempts
             resetFailedAttempts(user.getId());
             return user;
         }
     }
 
-    /**
-     * Checks if email already exists in the database.
-     */
     public boolean emailExists(String email) throws Exception {
         String sql = "SELECT COUNT(*) FROM users WHERE email = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -76,9 +80,6 @@ public class UserService {
         }
     }
 
-    /**
-     * Checks if phone number already exists in the database.
-     */
     public boolean phoneExists(String phone) throws Exception {
         String sql = "SELECT COUNT(*) FROM users WHERE phone = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -90,11 +91,8 @@ public class UserService {
         }
     }
 
-    /**
-     * Retrieves a user by their ID.
-     */
     public User getById(int id) throws Exception {
-        String sql = "SELECT * FROM users WHERE id = ?";
+        String sql = SELECT_USER + " WHERE u.id = ?";
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
@@ -106,12 +104,14 @@ public class UserService {
         }
     }
 
-    /**
-     * Retrieves all users with the 'patient' role.
-     */
     public List<User> getAllPatients() throws Exception {
+        return getAllPatients(null, null);
+    }
+
+    // Sortable variant. Allowed sortKey values: name, email, phone, status, created.
+    public List<User> getAllPatients(String sortKey, String sortDir) throws Exception {
         List<User> patients = new ArrayList<>();
-        String sql = "SELECT * FROM users WHERE role = 'patient' ORDER BY created_at DESC";
+        String sql = SELECT_USER + " WHERE r.name = 'patient' " + buildPatientOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
@@ -122,7 +122,19 @@ public class UserService {
         return patients;
     }
 
-    // Updates basic profile info
+    private static String buildPatientOrderBy(String sortKey, String sortDir) {
+        String dir = "desc".equalsIgnoreCase(sortDir) ? "DESC" : "ASC";
+        if (sortKey == null) return "ORDER BY u.created_at DESC";
+        switch (sortKey) {
+            case "name":   return "ORDER BY u.full_name " + dir;
+            case "email":  return "ORDER BY u.email " + dir;
+            case "phone":  return "ORDER BY u.phone " + dir;
+            case "status": return "ORDER BY u.is_locked " + dir + ", u.full_name ASC";
+            case "created":return "ORDER BY u.created_at " + dir;
+            default:       return "ORDER BY u.created_at DESC";
+        }
+    }
+
     public void updateProfile(int id, String fullName, String phone) throws Exception {
         String sql = "UPDATE users SET full_name = ?, phone = ? WHERE id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -134,7 +146,54 @@ public class UserService {
         }
     }
 
-    // Sets a new password (encrypts it first)
+    public void updateByAdmin(int id, String fullName, String email, String phone) throws Exception {
+        String sql = "UPDATE users SET full_name = ?, email = ?, phone = ? WHERE id = ?";
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, fullName);
+            ps.setString(2, email);
+            ps.setString(3, phone);
+            ps.setInt(4, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public void addByAdmin(User user) throws Exception {
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(INSERT_USER_AS_ROLE)) {
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, AESUtil.encrypt(user.getPassword()));
+            ps.setString(4, user.getPhone());
+            ps.setString(5, "patient");
+            ps.executeUpdate();
+        }
+    }
+
+    public boolean emailExistsForOtherUser(String email, int excludeId) throws Exception {
+        String sql = "SELECT COUNT(*) FROM users WHERE email = ? AND id <> ?";
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1) > 0;
+        }
+    }
+
+    public boolean phoneExistsForOtherUser(String phone, int excludeId) throws Exception {
+        String sql = "SELECT COUNT(*) FROM users WHERE phone = ? AND id <> ?";
+        try (Connection conn = DBConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, phone);
+            ps.setInt(2, excludeId);
+            ResultSet rs = ps.executeQuery();
+            rs.next();
+            return rs.getInt(1) > 0;
+        }
+    }
+
     public void updatePassword(int id, String newPassword) throws Exception {
         String sql = "UPDATE users SET password = ? WHERE id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -145,9 +204,6 @@ public class UserService {
         }
     }
 
-    /**
-     * Deletes a user by ID.
-     */
     public void deleteUser(int id) throws Exception {
         String sql = "DELETE FROM users WHERE id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -157,9 +213,6 @@ public class UserService {
         }
     }
 
-    /**
-     * Unlocks a user account and resets failed attempts.
-     */
     public void unlockUser(int id) throws Exception {
         String sql = "UPDATE users SET is_locked = 0, failed_attempts = 0 WHERE id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -169,10 +222,6 @@ public class UserService {
         }
     }
 
-    /**
-     * Generates an 8-character uppercase reset token and stores it in the DB.
-     * Returns the token.
-     */
     public String generateResetToken(String email) throws Exception {
         String token = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
         String sql = "UPDATE users SET reset_token = ? WHERE email = ?";
@@ -188,9 +237,6 @@ public class UserService {
         return token;
     }
 
-    /**
-     * Resets password using a token. Verifies token matches, then updates password and clears token.
-     */
     public void resetPassword(String email, String token, String newPassword) throws Exception {
         String sql = "SELECT reset_token FROM users WHERE email = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -214,8 +260,6 @@ public class UserService {
             ps.executeUpdate();
         }
     }
-
-    // Helpers
 
     private void incrementFailedAttempts(int userId) throws Exception {
         String sql = "UPDATE users SET failed_attempts = failed_attempts + 1 WHERE id = ?";
@@ -244,6 +288,7 @@ public class UserService {
         }
     }
 
+    // Reads role from the joined roles table (alias "role_name")
     private User mapUser(ResultSet rs) throws SQLException {
         User user = new User();
         user.setId(rs.getInt("id"));
@@ -251,7 +296,8 @@ public class UserService {
         user.setEmail(rs.getString("email"));
         user.setPassword(rs.getString("password"));
         user.setPhone(rs.getString("phone"));
-        user.setRole(rs.getString("role"));
+        user.setRoleId(rs.getInt("role_id"));
+        user.setRole(rs.getString("role_name"));
         user.setFailedAttempts(rs.getInt("failed_attempts"));
         user.setLocked(rs.getInt("is_locked") == 1);
         user.setResetToken(rs.getString("reset_token"));

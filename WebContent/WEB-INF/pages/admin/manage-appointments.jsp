@@ -1,6 +1,8 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.net.URLEncoder" %>
 <%@ page import="com.carepulse.model.Appointment" %>
+<%@ page import="com.carepulse.util.TableSort" %>
 <%
     request.setAttribute("pageTitle", "Manage Appointments");
     request.setAttribute("activePage", "appointments");
@@ -12,6 +14,15 @@
     String searchKeyword = (String) request.getAttribute("searchKeyword");
     String successMsg = request.getParameter("success");
     String errorMsg = (String) request.getAttribute("error");
+    String sortKey = (String) request.getAttribute("sortKey");
+    String sortDir = (String) request.getAttribute("sortDir");
+
+    // Preserve search keyword when changing sort
+    StringBuilder apptBaseSb = new StringBuilder(ctx + "/admin/appointments?");
+    if (searchKeyword != null && !searchKeyword.isEmpty()) {
+        apptBaseSb.append("search=").append(URLEncoder.encode(searchKeyword, "UTF-8")).append("&");
+    }
+    String apptBase = apptBaseSb.toString();
 %>
 
 <% if (successMsg != null && !successMsg.isEmpty()) { %>
@@ -40,12 +51,12 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Patient</th>
-                        <th>Doctor</th>
-                        <th>Specialization</th>
-                        <th>Date</th>
+                        <th><a class="<%= TableSort.headerClass("patient", sortKey) %>" href="<%= apptBase %>sort=patient&dir=<%= TableSort.nextDir("patient", sortKey, sortDir) %>">Patient<%= TableSort.indicator("patient", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("doctor", sortKey) %>" href="<%= apptBase %>sort=doctor&dir=<%= TableSort.nextDir("doctor", sortKey, sortDir) %>">Doctor<%= TableSort.indicator("doctor", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("specialization", sortKey) %>" href="<%= apptBase %>sort=specialization&dir=<%= TableSort.nextDir("specialization", sortKey, sortDir) %>">Specialization<%= TableSort.indicator("specialization", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("date", sortKey) %>" href="<%= apptBase %>sort=date&dir=<%= TableSort.nextDir("date", sortKey, sortDir) %>">Date<%= TableSort.indicator("date", sortKey, sortDir) %></a></th>
                         <th>Time</th>
-                        <th>Status</th>
+                        <th><a class="<%= TableSort.headerClass("status", sortKey) %>" href="<%= apptBase %>sort=status&dir=<%= TableSort.nextDir("status", sortKey, sortDir) %>">Status<%= TableSort.indicator("status", sortKey, sortDir) %></a></th>
                         <th>Actions</th>
                     </tr>
                 </thead>
