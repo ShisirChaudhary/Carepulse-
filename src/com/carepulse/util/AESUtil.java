@@ -9,11 +9,14 @@ public class AESUtil {
 
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/ECB/PKCS5Padding";
-    private static final String SECRET_KEY = "CarePulse@2024!!";
+    private static String getSecretKey() {
+        String key = System.getenv("CAREPULSE_AES_KEY");
+        return (key != null && !key.trim().isEmpty()) ? key : "CarePulse@2024!!";
+    }
 
     // Plain text to Base64 encrypted string
     public static String encrypt(String plainText) throws Exception {
-        SecretKeySpec keySpec = new SecretKeySpec(SECRET_KEY.getBytes("UTF-8"), ALGORITHM);
+        SecretKeySpec keySpec = new SecretKeySpec(getSecretKey().getBytes("UTF-8"), ALGORITHM);
         Cipher cipher = Cipher.getInstance(TRANSFORMATION);
         cipher.init(Cipher.ENCRYPT_MODE, keySpec);
         byte[] encrypted = cipher.doFinal(plainText.getBytes("UTF-8"));
@@ -22,7 +25,7 @@ public class AESUtil {
 
     // Decrypts it back to plain text
     public static String decrypt(String encryptedText) throws Exception {
-        SecretKeySpec keySpec = new SecretKeySpec(SECRET_KEY.getBytes("UTF-8"), ALGORITHM);
+        SecretKeySpec keySpec = new SecretKeySpec(getSecretKey().getBytes("UTF-8"), ALGORITHM);
         Cipher cipher = Cipher.getInstance(TRANSFORMATION);
         cipher.init(Cipher.DECRYPT_MODE, keySpec);
         byte[] decoded = Base64.getDecoder().decode(encryptedText);

@@ -35,8 +35,16 @@ public class AppointmentServlet extends HttpServlet {
             } else {
                 handlePatientGet(req, resp, action, session);
             }
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", e.getMessage());
+            if ("admin".equals(role)) {
+                req.getRequestDispatcher("/WEB-INF/pages/admin/manage-appointments.jsp").forward(req, resp);
+            } else {
+                req.getRequestDispatcher("/WEB-INF/pages/patient/my-appointments.jsp").forward(req, resp);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             if ("admin".equals(role)) {
                 req.getRequestDispatcher("/WEB-INF/pages/admin/manage-appointments.jsp").forward(req, resp);
             } else {
@@ -77,8 +85,17 @@ public class AppointmentServlet extends HttpServlet {
             a.setNotes(notes != null ? notes.trim() : "");
             appointmentService.book(a);
             resp.sendRedirect(req.getContextPath() + "/patient/appointments?success=Appointment booked successfully!");
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", "Booking failed: " + e.getMessage());
+            try {
+                req.setAttribute("doctors", doctorService.getAvailable());
+            } catch (Exception ex) {
+                // ignore
+            }
+            req.getRequestDispatcher("/WEB-INF/pages/patient/book-appointment.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             try {
                 req.setAttribute("doctors", doctorService.getAvailable());
             } catch (Exception ex) {

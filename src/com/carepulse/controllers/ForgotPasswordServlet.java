@@ -44,8 +44,12 @@ public class ForgotPasswordServlet extends HttpServlet {
                 req.setAttribute("email", email.trim());
                 req.setAttribute("tokenGenerated", token);
                 req.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(req, resp);
-            } catch (Exception e) {
+            } catch (com.carepulse.util.CarePulseException e) {
                 req.setAttribute("error", e.getMessage());
+                req.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(req, resp);
+            } catch (Exception e) {
+                e.printStackTrace();
+                req.setAttribute("error", "An unexpected system error occurred. Please try again.");
                 req.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(req, resp);
             }
 
@@ -81,8 +85,14 @@ public class ForgotPasswordServlet extends HttpServlet {
             try {
                 userService.resetPassword(email.trim(), token.trim(), newPassword.trim());
                 resp.sendRedirect(req.getContextPath() + "/login?success=Password reset successful! Please login.");
-            } catch (Exception e) {
+            } catch (com.carepulse.util.CarePulseException e) {
                 req.setAttribute("error", e.getMessage());
+                req.setAttribute("step", "2");
+                req.setAttribute("email", email);
+                req.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(req, resp);
+            } catch (Exception e) {
+                e.printStackTrace();
+                req.setAttribute("error", "An unexpected system error occurred. Please try again.");
                 req.setAttribute("step", "2");
                 req.setAttribute("email", email);
                 req.getRequestDispatcher("/WEB-INF/pages/forgot-password.jsp").forward(req, resp);

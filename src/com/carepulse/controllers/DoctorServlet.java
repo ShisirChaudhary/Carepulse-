@@ -48,8 +48,13 @@ public class DoctorServlet extends HttpServlet {
             } else {
                 resp.sendRedirect(req.getContextPath() + "/admin/doctors");
             }
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", e.getMessage());
+            req.setAttribute("doctors", null);
+            req.getRequestDispatcher("/WEB-INF/pages/admin/manage-doctors.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.setAttribute("doctors", null);
             req.getRequestDispatcher("/WEB-INF/pages/admin/manage-doctors.jsp").forward(req, resp);
         }
@@ -90,8 +95,12 @@ public class DoctorServlet extends HttpServlet {
                 doctorService.update(doctor);
                 resp.sendRedirect(req.getContextPath() + "/admin/doctors?success=Doctor updated successfully.");
             }
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", "Operation failed: " + e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/pages/admin/doctor-form.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/admin/doctor-form.jsp").forward(req, resp);
         }
     }

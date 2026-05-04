@@ -3,6 +3,7 @@ package com.carepulse.service;
 import com.carepulse.config.DBConfig;
 import com.carepulse.model.User;
 import com.carepulse.util.AESUtil;
+import com.carepulse.util.CarePulseException;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public class UserService {
 
             // Check lock status
             if (user.isLocked()) {
-                throw new Exception("Account is locked due to too many failed login attempts. Contact admin.");
+                throw new CarePulseException("Account is locked due to too many failed login attempts. Contact admin.");
             }
 
             // Decrypt stored password and compare
@@ -51,7 +52,7 @@ public class UserService {
                 int newAttempts = user.getFailedAttempts() + 1;
                 if (newAttempts >= 5) {
                     lockUser(user.getId());
-                    throw new Exception("Account locked after 5 failed attempts. Contact admin.");
+                    throw new CarePulseException("Account locked after 5 failed attempts. Contact admin.");
                 }
                 return null;
             }
@@ -182,7 +183,7 @@ public class UserService {
             ps.setString(2, email);
             int rows = ps.executeUpdate();
             if (rows == 0) {
-                throw new Exception("Email not found.");
+                throw new CarePulseException("Email not found.");
             }
         }
         return token;
@@ -198,11 +199,11 @@ public class UserService {
             ps.setString(1, email);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) {
-                throw new Exception("Email not found.");
+                throw new CarePulseException("Email not found.");
             }
             String storedToken = rs.getString("reset_token");
             if (storedToken == null || !storedToken.equals(token)) {
-                throw new Exception("Invalid reset token.");
+                throw new CarePulseException("Invalid reset token.");
             }
         }
 

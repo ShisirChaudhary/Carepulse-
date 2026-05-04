@@ -61,8 +61,12 @@ public class AdminServlet extends HttpServlet {
             } else {
                 resp.sendRedirect(req.getContextPath() + "/admin");
             }
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/pages/admin/dashboard.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/admin/dashboard.jsp").forward(req, resp);
         }
     }

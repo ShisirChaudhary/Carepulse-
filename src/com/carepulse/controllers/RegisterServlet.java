@@ -85,8 +85,12 @@ public class RegisterServlet extends HttpServlet {
 
             resp.sendRedirect(req.getContextPath() + "/login?success=Registration successful! Please login.");
 
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", "Registration failed: " + e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(req, resp);
         }
     }

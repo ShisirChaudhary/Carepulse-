@@ -31,8 +31,12 @@ public class ProfileServlet extends HttpServlet {
             User user = userService.getById(userId);
             req.setAttribute("userBean", user);
             req.getRequestDispatcher("/WEB-INF/pages/patient/profile.jsp").forward(req, resp);
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/pages/patient/profile.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/patient/profile.jsp").forward(req, resp);
         }
     }
@@ -105,13 +109,17 @@ public class ProfileServlet extends HttpServlet {
             } else {
                 resp.sendRedirect(req.getContextPath() + "/patient/profile");
             }
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", e.getMessage());
             try {
                 req.setAttribute("userBean", userService.getById(userId));
             } catch (Exception ex) {
                 // ignore
             }
+            req.getRequestDispatcher("/WEB-INF/pages/patient/profile.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/patient/profile.jsp").forward(req, resp);
         }
     }

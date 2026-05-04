@@ -71,8 +71,12 @@ public class LoginServlet extends HttpServlet {
                 resp.sendRedirect(req.getContextPath() + "/patient");
             }
 
-        } catch (Exception e) {
+        } catch (com.carepulse.util.CarePulseException e) {
             req.setAttribute("error", e.getMessage());
+            req.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(req, resp);
+        } catch (Exception e) {
+            e.printStackTrace();
+            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
             req.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(req, resp);
         }
     }
