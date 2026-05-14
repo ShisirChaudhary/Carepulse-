@@ -5,21 +5,16 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-// Servlet that invalidates the user session and redirects to login.
-@WebServlet("/logout")
-public class LogoutServlet extends HttpServlet {
+// Servlet that serves the public About page.
+@WebServlet("/about")
+public class AboutServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-        resp.sendRedirect(req.getContextPath() + "/login");
+        req.getRequestDispatcher("/WEB-INF/pages/about.jsp").forward(req, resp);
     }
 }

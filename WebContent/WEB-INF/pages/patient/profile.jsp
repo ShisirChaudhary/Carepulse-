@@ -18,10 +18,10 @@
     <div class="alert alert-error"><%= errorMsg %></div>
 <% } %>
 
-<div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-    
+<div class="split-row">
+
     <!-- Update Profile Form -->
-    <div class="card form-card" style="flex: 1; min-width: 300px;">
+    <div class="card form-card">
         <div class="card-header">
             <h2>Personal Information</h2>
         </div>
@@ -31,8 +31,8 @@
                 
                 <div class="form-group">
                     <label>Email Address</label>
-                    <input type="email" value="<jsp:getProperty name="userBean" property="email" />" disabled style="background-color: #f1f5f9; color: #64748b; cursor: not-allowed;">
-                    <small style="color: #64748b;">Email address cannot be changed.</small>
+                    <input type="email" class="input-readonly" value="<jsp:getProperty name="userBean" property="email" />" disabled>
+                    <small class="help-text">Email address cannot be changed.</small>
                 </div>
 
                 <div class="form-group">
@@ -53,7 +53,7 @@
     </div>
 
     <!-- Change Password Form -->
-    <div class="card form-card" style="flex: 1; min-width: 300px;">
+    <div class="card form-card">
         <div class="card-header">
             <h2>Change Password</h2>
         </div>

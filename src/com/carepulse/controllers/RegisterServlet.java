@@ -12,9 +12,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-/**
- * Handles patient registration.
- */
+// Servlet that handles patient registration.
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
 
@@ -35,7 +33,7 @@ public class RegisterServlet extends HttpServlet {
         String password = req.getParameter("password");
         String confirmPassword = req.getParameter("confirmPassword");
 
-        // Validations
+        // Validate each field before attempting any database work.
         if (!ValidationUtil.isValidName(fullName)) {
             req.setAttribute("error", "Name must contain only letters and spaces (2-100 chars).");
             req.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(req, resp);
@@ -63,7 +61,7 @@ public class RegisterServlet extends HttpServlet {
         }
 
         try {
-            // Check duplicates
+            // Reject the registration if the email or phone is already in use.
             if (userService.emailExists(email.trim())) {
                 req.setAttribute("error", "Email is already registered.");
                 req.getRequestDispatcher("/WEB-INF/pages/register.jsp").forward(req, resp);
@@ -75,7 +73,7 @@ public class RegisterServlet extends HttpServlet {
                 return;
             }
 
-            // Register
+            // Create the new patient account.
             User user = new User();
             user.setFullName(fullName.trim());
             user.setEmail(email.trim());

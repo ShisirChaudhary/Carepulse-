@@ -4,6 +4,7 @@ public class Doctor {
 
     private int id;
     private String fullName;
+    private int specializationId;
     private String specialization;
     private String contact;
     private String email;
@@ -28,6 +29,14 @@ public class Doctor {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public int getSpecializationId() {
+        return specializationId;
+    }
+
+    public void setSpecializationId(int specializationId) {
+        this.specializationId = specializationId;
     }
 
     public String getSpecialization() {

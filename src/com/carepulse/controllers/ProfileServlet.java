@@ -13,9 +13,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-/**
- * Handles patient profile view and updates.
- */
+// Servlet that handles the patient profile page and password changes.
 @WebServlet("/patient/profile")
 public class ProfileServlet extends HttpServlet {
 
@@ -77,7 +75,7 @@ public class ProfileServlet extends HttpServlet {
                 String newPassword = req.getParameter("newPassword");
                 String confirmPassword = req.getParameter("confirmPassword");
 
-                // Verify current password
+                // Verify the current password before allowing the change.
                 User user = userService.getById(userId);
                 User loginCheck = userService.login(user.getEmail(), currentPassword);
                 if (loginCheck == null) {
@@ -113,8 +111,7 @@ public class ProfileServlet extends HttpServlet {
             req.setAttribute("error", e.getMessage());
             try {
                 req.setAttribute("userBean", userService.getById(userId));
-            } catch (Exception ex) {
-                // ignore
+            } catch (Exception ignored) {
             }
             req.getRequestDispatcher("/WEB-INF/pages/patient/profile.jsp").forward(req, resp);
         } catch (Exception e) {

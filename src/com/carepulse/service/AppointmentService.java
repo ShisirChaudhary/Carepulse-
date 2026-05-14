@@ -7,21 +7,27 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Service layer for Appointment operations.
- */
+// Service class for the appointments table.
 public class AppointmentService {
 
-    /**
-     * Retrieves all appointments with joined user and doctor names.
-     */
+    // Base SELECT statement that joins users, doctors and specializations.
+    private static final String SELECT_APPT_BASE =
+            "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, s.name AS specialization " +
+            "FROM appointments a " +
+            "JOIN users u ON a.patient_id = u.id " +
+            "JOIN doctors d ON a.doctor_id = d.id " +
+            "JOIN specializations s ON d.specialization_id = s.id ";
+
+    // Returns every appointment ordered by date (newest first).
     public List<Appointment> getAll() throws Exception {
+        return getAll(null, null);
+    }
+
+    // Returns every appointment with the specified sort key and direction.
+    // Allowed sort keys: date, patient, doctor, specialization, status.
+    public List<Appointment> getAll(String sortKey, String sortDir) throws Exception {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, d.specialization " +
-                     "FROM appointments a " +
-                     "JOIN users u ON a.patient_id = u.id " +
-                     "JOIN doctors d ON a.doctor_id = d.id " +
-                     "ORDER BY a.appointment_date DESC";
+        String sql = SELECT_APPT_BASE + buildApptOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ResultSet rs = ps.executeQuery();
@@ -32,17 +38,31 @@ public class AppointmentService {
         return list;
     }
 
-    /**
-     * Searches appointments by patient name or doctor name.
-     */
+    // Builds an ORDER BY clause from a fixed list of allowed sort keys.
+    private static String buildApptOrderBy(String sortKey, String sortDir) {
+        String dir = "desc".equalsIgnoreCase(sortDir) ? "DESC" : "ASC";
+        if (sortKey == null) return "ORDER BY a.appointment_date DESC";
+        switch (sortKey) {
+            case "date":           return "ORDER BY a.appointment_date " + dir + ", a.appointment_time " + dir;
+            case "patient":        return "ORDER BY u.full_name " + dir;
+            case "doctor":         return "ORDER BY d.full_name " + dir;
+            case "specialization": return "ORDER BY s.name " + dir + ", d.full_name ASC";
+            case "status":         return "ORDER BY a.status " + dir + ", a.appointment_date DESC";
+            default:               return "ORDER BY a.appointment_date DESC";
+        }
+    }
+
+    // Searches appointments by patient or doctor name.
     public List<Appointment> search(String keyword) throws Exception {
+        return search(keyword, null, null);
+    }
+
+    // Searches appointments with an optional sort.
+    public List<Appointment> search(String keyword, String sortKey, String sortDir) throws Exception {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, d.specialization " +
-                     "FROM appointments a " +
-                     "JOIN users u ON a.patient_id = u.id " +
-                     "JOIN doctors d ON a.doctor_id = d.id " +
+        String sql = SELECT_APPT_BASE +
                      "WHERE u.full_name LIKE ? OR d.full_name LIKE ? " +
-                     "ORDER BY a.appointment_date DESC";
+                     buildApptOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             String like = "%" + keyword + "%";
@@ -56,17 +76,17 @@ public class AppointmentService {
         return list;
     }
 
-    /**
-     * Retrieves all appointments for a specific patient.
-     */
+    // Returns every appointment belonging to the supplied patient id.
     public List<Appointment> getByPatient(int patientId) throws Exception {
+        return getByPatient(patientId, null, null);
+    }
+
+    // Returns every appointment belonging to the supplied patient id, with an optional sort.
+    public List<Appointment> getByPatient(int patientId, String sortKey, String sortDir) throws Exception {
         List<Appointment> list = new ArrayList<>();
-        String sql = "SELECT a.*, u.full_name AS patient_name, d.full_name AS doctor_name, d.specialization " +
-                     "FROM appointments a " +
-                     "JOIN users u ON a.patient_id = u.id " +
-                     "JOIN doctors d ON a.doctor_id = d.id " +
+        String sql = SELECT_APPT_BASE +
                      "WHERE a.patient_id = ? " +
-                     "ORDER BY a.appointment_date DESC";
+                     buildApptOrderBy(sortKey, sortDir);
         try (Connection conn = DBConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, patientId);
@@ -78,9 +98,7 @@ public class AppointmentService {
         return list;
     }
 
-    /**
-     * Books a new appointment.
-     */
+    // Inserts a new appointment with status 'pending'.
     public void book(Appointment a) throws Exception {
         String sql = "INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, status, notes) VALUES (?, ?, ?, ?, 'pending', ?)";
         try (Connection conn = DBConfig.getConnection();
@@ -94,9 +112,7 @@ public class AppointmentService {
         }
     }
 
-    /**
-     * Updates the status of an appointment (admin action).
-     */
+    // Updates the status of an appointment.
     public void updateStatus(int id, String status) throws Exception {
         String sql = "UPDATE appointments SET status = ? WHERE id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -107,9 +123,7 @@ public class AppointmentService {
         }
     }
 
-    /**
-     * Cancels an appointment only if it belongs to the specified patient.
-     */
+    // Cancels an appointment only if it belongs to the supplied patient.
     public void cancel(int id, int patientId) throws Exception {
         String sql = "UPDATE appointments SET status = 'cancelled' WHERE id = ? AND patient_id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -120,9 +134,7 @@ public class AppointmentService {
         }
     }
 
-    /**
-     * Returns total count of all appointments.
-     */
+    // Returns the total number of appointments.
     public int countAll() throws Exception {
         String sql = "SELECT COUNT(*) FROM appointments";
         try (Connection conn = DBConfig.getConnection();
@@ -133,9 +145,7 @@ public class AppointmentService {
         }
     }
 
-    /**
-     * Returns total count of appointments for a specific patient.
-     */
+    // Returns the number of appointments for a specific patient.
     public int countByPatient(int patientId) throws Exception {
         String sql = "SELECT COUNT(*) FROM appointments WHERE patient_id = ?";
         try (Connection conn = DBConfig.getConnection();
@@ -147,6 +157,7 @@ public class AppointmentService {
         }
     }
 
+    // Maps the current row of the result set into an Appointment object.
     private Appointment mapAppointment(ResultSet rs) throws SQLException {
         Appointment a = new Appointment();
         a.setId(rs.getInt("id"));

@@ -49,6 +49,10 @@
             <a href="<%= ctx %>/forgot-password">Forgot Password?</a>
             <a href="<%= ctx %>/register">Create an Account</a>
         </div>
+        <div class="auth-links">
+            <a href="<%= ctx %>/about">About Us</a>
+            <a href="<%= ctx %>/contact">Contact Us</a>
+        </div>
     </div>
 </div>
 </body>

@@ -11,6 +11,7 @@
     Integer totalPatients = (Integer) request.getAttribute("totalPatients");
     Integer totalDoctors = (Integer) request.getAttribute("totalDoctors");
     Integer totalAppointments = (Integer) request.getAttribute("totalAppointments");
+    Integer openInquiries = (Integer) request.getAttribute("openInquiries");
     List<Appointment> recentAppointments = (List<Appointment>) request.getAttribute("recentAppointments");
     String errorMsg = (String) request.getAttribute("error");
 %>
@@ -46,6 +47,15 @@
         <div class="stat-info">
             <h3><%= totalAppointments != null ? totalAppointments : 0 %></h3>
             <p>Appointments</p>
+        </div>
+    </div>
+    <div class="stat-card stat-card-blue">
+        <div class="stat-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </div>
+        <div class="stat-info">
+            <h3><%= openInquiries != null ? openInquiries : 0 %></h3>
+            <p>Open Inquiries</p>
         </div>
     </div>
 </div>

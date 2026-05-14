@@ -7,6 +7,7 @@ public class User {
     private String email;
     private String password;
     private String phone;
+    private int roleId;
     private String role;
     private int failedAttempts;
     private boolean locked;
@@ -55,6 +56,14 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public int getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(int roleId) {
+        this.roleId = roleId;
     }
 
     public String getRole() {

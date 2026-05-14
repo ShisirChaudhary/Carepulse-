@@ -1,75 +1,68 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" isErrorPage="true" %>
+<%
+    String ctx = request.getContextPath();
+%>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Internal Server Error | CarePulse</title>
-    <link rel="stylesheet" href="<%= request.getContextPath() %>/css/style.css">
-    <style>
-        .error-page {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background-color: #f8fafc;
-            text-align: center;
-            padding: 2rem;
-        }
-        .error-code {
-            font-size: 6rem;
-            font-weight: 700;
-            color: #ef4444;
-            line-height: 1;
-            margin-bottom: 1rem;
-        }
-        .error-title {
-            font-size: 2rem;
-            color: #1e293b;
-            margin-bottom: 1rem;
-        }
-        .error-desc {
-            color: #64748b;
-            margin-bottom: 2rem;
-            max-width: 500px;
-        }
-        .exception-trace {
-            background: #fff;
-            padding: 1rem;
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-            text-align: left;
-            overflow-x: auto;
-            max-width: 800px;
-            width: 100%;
-            margin-bottom: 2rem;
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: #ef4444;
-            display: none; /* hidden by default, could be toggled */
-        }
-    </style>
+    <link rel="stylesheet" href="<%= ctx %>/css/style.css?v=20260514">
 </head>
-<body>
-    <div class="error-page">
-        <div class="error-code">500</div>
-        <h1 class="error-title">Internal Server Error</h1>
-        <p class="error-desc">We're sorry, but something went wrong on our end. Please try again later.</p>
-        
-        <% if (exception != null) { %>
-            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('trace').style.display='block'" style="margin-bottom: 1rem;">Show Details (Admin only)</button>
-            <div id="trace" class="exception-trace">
-                <%= exception.getMessage() %><br><br>
-                <%
-                    for(StackTraceElement el : exception.getStackTrace()) {
-                        out.println(el.toString() + "<br>");
-                    }
-                %>
-            </div>
-        <% } %>
+<body class="error-body">
+    <main class="error-screen">
+        <article class="error-panel error-panel-danger">
+            <figure class="error-figure">
+                <svg viewBox="0 0 240 160" width="240" height="160" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="dangerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#dc2626"/>
+                            <stop offset="100%" stop-color="#f97316"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Baseline -->
+                    <line x1="10" y1="80" x2="230" y2="80"
+                          stroke="#fecaca" stroke-width="1.5" stroke-dasharray="3 5"/>
+                    <!-- Pulse, then flatlines -->
+                    <path d="M10 80 L40 80 L52 50 L70 110 L86 60 L100 95 L112 80 L230 80"
+                          fill="none" stroke="url(#dangerGrad)" stroke-width="3.5"
+                          stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
+            </figure>
 
-        <a href="<%= request.getContextPath() %>/login" class="btn btn-primary">Return Home</a>
-    </div>
+            <p class="error-eyebrow error-eyebrow-danger">Error 500</p>
+            <h1 class="error-headline">Something Went Wrong</h1>
+            <p class="error-lead">
+                We hit an unexpected error on our end. Our team has been notified.
+                Please try again in a moment.
+            </p>
+
+            <% if (exception != null) { %>
+                <button type="button" class="error-trace-toggle"
+                        onclick="document.getElementById('trace').classList.add('is-visible'); this.style.display='none';">
+                    Show Technical Details
+                </button>
+                <div id="trace" class="exception-trace">
+                    <strong><%= exception.getClass().getSimpleName() %>:</strong> <%= exception.getMessage() %><br><br>
+                    <%
+                        for (StackTraceElement el : exception.getStackTrace()) {
+                            out.println(el.toString() + "<br>");
+                        }
+                    %>
+                </div>
+            <% } %>
+
+            <div class="error-cta">
+                <a href="<%= ctx %>/login" class="btn btn-primary">Return to Sign In</a>
+                <a href="<%= ctx %>/contact" class="btn btn-secondary">Report this Issue</a>
+            </div>
+
+            <nav class="error-quicklinks" aria-label="Quick links">
+                <a href="<%= ctx %>/about">About</a>
+                <a href="<%= ctx %>/contact">Contact</a>
+            </nav>
+        </article>
+    </main>
 </body>
 </html>

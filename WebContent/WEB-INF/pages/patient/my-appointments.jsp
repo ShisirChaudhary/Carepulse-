@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carepulse.model.Appointment" %>
+<%@ page import="com.carepulse.util.TableSort" %>
 <%
     request.setAttribute("pageTitle", "My Appointments");
     request.setAttribute("activePage", "appointments");
@@ -11,6 +12,9 @@
     List<Appointment> appointments = (List<Appointment>) request.getAttribute("appointments");
     String successMsg = request.getParameter("success");
     String errorMsg = (String) request.getAttribute("error");
+    String sortKey = (String) request.getAttribute("sortKey");
+    String sortDir = (String) request.getAttribute("sortDir");
+    String myApptBase = ctx + "/patient/appointments?";
 %>
 
 <% if (successMsg != null && !successMsg.isEmpty()) { %>
@@ -32,12 +36,12 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Doctor</th>
-                        <th>Specialization</th>
-                        <th>Date</th>
+                        <th><a class="<%= TableSort.headerClass("doctor", sortKey) %>" href="<%= myApptBase %>sort=doctor&dir=<%= TableSort.nextDir("doctor", sortKey, sortDir) %>">Doctor<%= TableSort.indicator("doctor", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("specialization", sortKey) %>" href="<%= myApptBase %>sort=specialization&dir=<%= TableSort.nextDir("specialization", sortKey, sortDir) %>">Specialization<%= TableSort.indicator("specialization", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("date", sortKey) %>" href="<%= myApptBase %>sort=date&dir=<%= TableSort.nextDir("date", sortKey, sortDir) %>">Date<%= TableSort.indicator("date", sortKey, sortDir) %></a></th>
                         <th>Time</th>
                         <th>Notes</th>
-                        <th>Status</th>
+                        <th><a class="<%= TableSort.headerClass("status", sortKey) %>" href="<%= myApptBase %>sort=status&dir=<%= TableSort.nextDir("status", sortKey, sortDir) %>">Status<%= TableSort.indicator("status", sortKey, sortDir) %></a></th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -49,7 +53,7 @@
                         <td><%= a.getSpecialization() %></td>
                         <td><%= a.getAppointmentDate() %></td>
                         <td><%= a.getAppointmentTime() %></td>
-                        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<%= a.getNotes() %>"><%= a.getNotes() %></td>
+                        <td class="cell-truncate-sm" title="<%= a.getNotes() %>"><%= a.getNotes() %></td>
                         <td><span class="badge badge-<%= a.getStatus() %>"><%= a.getStatus() %></span></td>
                         <td>
                             <% if ("pending".equals(a.getStatus())) { %>

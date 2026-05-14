@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 
-// Just handles user signing in
+// Servlet that handles user login.
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
 
@@ -22,7 +22,7 @@ public class LoginServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        // Send them to dashboard if they're already logged in
+        // Redirect the user to their dashboard if they are already signed in.
         HttpSession session = req.getSession(false);
         if (session != null && session.getAttribute("userId") != null) {
             String role = (String) session.getAttribute("role");
@@ -42,7 +42,7 @@ public class LoginServlet extends HttpServlet {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
 
-        // Basic check
+        // Check that both fields were supplied.
         if (ValidationUtil.isEmpty(email) || ValidationUtil.isEmpty(password)) {
             req.setAttribute("error", "Email and password are required.");
             req.getRequestDispatcher("/WEB-INF/pages/login.jsp").forward(req, resp);
@@ -57,14 +57,14 @@ public class LoginServlet extends HttpServlet {
                 return;
             }
 
-            // Set up our session
+            // Create the session for the authenticated user.
             HttpSession session = req.getSession();
             session.setAttribute("userId", user.getId());
             session.setAttribute("userName", user.getFullName());
             session.setAttribute("role", user.getRole());
-            session.setMaxInactiveInterval(1800); // 30 minutes
+            session.setMaxInactiveInterval(1800);
 
-            // Redirect based on role
+            // Send the user to the dashboard for their role.
             if ("admin".equals(user.getRole())) {
                 resp.sendRedirect(req.getContextPath() + "/admin");
             } else {

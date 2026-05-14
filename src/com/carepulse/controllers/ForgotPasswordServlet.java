@@ -11,9 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-/**
- * Handles forgot password flow (2-step: generate token, then reset).
- */
+// Servlet that handles the two-step forgot password flow:
+// step 1 generates a reset token, step 2 verifies the token and sets the new password.
 @WebServlet("/forgot-password")
 public class ForgotPasswordServlet extends HttpServlet {
 
@@ -31,7 +30,7 @@ public class ForgotPasswordServlet extends HttpServlet {
         String step = req.getParameter("step");
 
         if ("1".equals(step)) {
-            // Step 1: Generate token
+            // Step 1: generate the reset token for the supplied email.
             String email = req.getParameter("email");
             if (ValidationUtil.isEmpty(email)) {
                 req.setAttribute("error", "Please enter your email address.");
@@ -54,7 +53,7 @@ public class ForgotPasswordServlet extends HttpServlet {
             }
 
         } else if ("2".equals(step)) {
-            // Step 2: Validate token and reset password
+            // Step 2: validate the token and apply the new password.
             String email = req.getParameter("email");
             String token = req.getParameter("token");
             String newPassword = req.getParameter("newPassword");

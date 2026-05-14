@@ -2,9 +2,7 @@ package com.carepulse.util;
 
 import java.util.regex.Pattern;
 
-/**
- * Validation utility for form input validation.
- */
+// Static helper methods used by controllers to validate user input.
 public class ValidationUtil {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
@@ -19,37 +17,27 @@ public class ValidationUtil {
         "^\\d{10}$"
     );
 
-    /**
-     * Checks if a string is null or blank.
-     */
+    // Returns true when the supplied string is null or contains only whitespace.
     public static boolean isEmpty(String value) {
         return value == null || value.trim().isEmpty();
     }
 
-    /**
-     * Validates name: letters and spaces only, 2-100 characters.
-     */
+    // Returns true when the name contains only letters and spaces (2-100 characters).
     public static boolean isValidName(String name) {
         return !isEmpty(name) && NAME_PATTERN.matcher(name.trim()).matches();
     }
 
-    /**
-     * Validates email format using regex.
-     */
+    // Returns true when the email matches the basic email pattern.
     public static boolean isValidEmail(String email) {
         return !isEmpty(email) && EMAIL_PATTERN.matcher(email.trim()).matches();
     }
 
-    /**
-     * Validates phone: exactly 10 digits.
-     */
+    // Returns true when the phone consists of exactly ten digits.
     public static boolean isValidPhone(String phone) {
         return !isEmpty(phone) && PHONE_PATTERN.matcher(phone.trim()).matches();
     }
 
-    /**
-     * Validates password: minimum 6 characters.
-     */
+    // Returns true when the password has at least six characters.
     public static boolean isValidPassword(String password) {
         return !isEmpty(password) && password.trim().length() >= 6;
     }

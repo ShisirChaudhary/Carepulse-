@@ -15,7 +15,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
-// Handles all the appointment stuff for admins and patients
+// Servlet that handles appointment views and actions for both admins and patients.
 @WebServlet({"/admin/appointments", "/patient/appointments"})
 public class AppointmentServlet extends HttpServlet {
 
@@ -35,16 +35,8 @@ public class AppointmentServlet extends HttpServlet {
             } else {
                 handlePatientGet(req, resp, action, session);
             }
-        } catch (com.carepulse.util.CarePulseException e) {
-            req.setAttribute("error", e.getMessage());
-            if ("admin".equals(role)) {
-                req.getRequestDispatcher("/WEB-INF/pages/admin/manage-appointments.jsp").forward(req, resp);
-            } else {
-                req.getRequestDispatcher("/WEB-INF/pages/patient/my-appointments.jsp").forward(req, resp);
-            }
         } catch (Exception e) {
-            e.printStackTrace();
-            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
+            req.setAttribute("error", e.getMessage());
             if ("admin".equals(role)) {
                 req.getRequestDispatcher("/WEB-INF/pages/admin/manage-appointments.jsp").forward(req, resp);
             } else {
@@ -64,13 +56,12 @@ public class AppointmentServlet extends HttpServlet {
         String time = req.getParameter("appointmentTime");
         String notes = req.getParameter("notes");
 
-        // Check if anything is missing
+        // Reject the booking when any required field is missing.
         if (ValidationUtil.isEmpty(doctorIdStr) || ValidationUtil.isEmpty(date) || ValidationUtil.isEmpty(time)) {
             req.setAttribute("error", "Doctor, date, and time are required.");
             try {
                 req.setAttribute("doctors", doctorService.getAvailable());
-            } catch (Exception e) {
-                // ignore
+            } catch (Exception ignored) {
             }
             req.getRequestDispatcher("/WEB-INF/pages/patient/book-appointment.jsp").forward(req, resp);
             return;
@@ -85,17 +76,8 @@ public class AppointmentServlet extends HttpServlet {
             a.setNotes(notes != null ? notes.trim() : "");
             appointmentService.book(a);
             resp.sendRedirect(req.getContextPath() + "/patient/appointments?success=Appointment booked successfully!");
-        } catch (com.carepulse.util.CarePulseException e) {
-            req.setAttribute("error", "Booking failed: " + e.getMessage());
-            try {
-                req.setAttribute("doctors", doctorService.getAvailable());
-            } catch (Exception ex) {
-                // ignore
-            }
-            req.getRequestDispatcher("/WEB-INF/pages/patient/book-appointment.jsp").forward(req, resp);
         } catch (Exception e) {
-            e.printStackTrace();
-            req.setAttribute("error", "An unexpected system error occurred. Please try again.");
+            req.setAttribute("error", "Booking failed: " + e.getMessage());
             try {
                 req.setAttribute("doctors", doctorService.getAvailable());
             } catch (Exception ex) {
@@ -115,16 +97,20 @@ public class AppointmentServlet extends HttpServlet {
             return;
         }
 
-        // Search if keyword exists, otherwise list everything
+        // Run a search when a keyword is supplied, otherwise list everything.
         String search = req.getParameter("search");
+        String sort = req.getParameter("sort");
+        String dir = req.getParameter("dir");
         List<Appointment> appointments;
         if (!ValidationUtil.isEmpty(search)) {
-            appointments = appointmentService.search(search.trim());
+            appointments = appointmentService.search(search.trim(), sort, dir);
             req.setAttribute("searchKeyword", search.trim());
         } else {
-            appointments = appointmentService.getAll();
+            appointments = appointmentService.getAll(sort, dir);
         }
         req.setAttribute("appointments", appointments);
+        req.setAttribute("sortKey", sort);
+        req.setAttribute("sortDir", dir);
         req.getRequestDispatcher("/WEB-INF/pages/admin/manage-appointments.jsp").forward(req, resp);
     }
 
@@ -145,8 +131,12 @@ public class AppointmentServlet extends HttpServlet {
             return;
         }
 
-        // Get the list of appointments for this patient
-        req.setAttribute("appointments", appointmentService.getByPatient(patientId));
+        // Load the list of appointments for the current patient.
+        String sort = req.getParameter("sort");
+        String dir = req.getParameter("dir");
+        req.setAttribute("appointments", appointmentService.getByPatient(patientId, sort, dir));
+        req.setAttribute("sortKey", sort);
+        req.setAttribute("sortDir", dir);
         req.getRequestDispatcher("/WEB-INF/pages/patient/my-appointments.jsp").forward(req, resp);
     }
 }

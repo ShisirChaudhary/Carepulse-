@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="com.carepulse.model.Doctor" %>
+<%@ page import="com.carepulse.util.TableSort" %>
 <%
     request.setAttribute("pageTitle", "Manage Doctors");
     request.setAttribute("activePage", "doctors");
@@ -11,6 +12,8 @@
     List<Doctor> doctors = (List<Doctor>) request.getAttribute("doctors");
     String successMsg = request.getParameter("success");
     String errorMsg = (String) request.getAttribute("error");
+    String sortKey = (String) request.getAttribute("sortKey");
+    String sortDir = (String) request.getAttribute("sortDir");
 %>
 
 <% if (successMsg != null && !successMsg.isEmpty()) { %>
@@ -32,11 +35,11 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Name</th>
-                        <th>Specialization</th>
+                        <th><a class="<%= TableSort.headerClass("name", sortKey) %>" href="<%= ctx %>/admin/doctors?sort=name&dir=<%= TableSort.nextDir("name", sortKey, sortDir) %>">Name<%= TableSort.indicator("name", sortKey, sortDir) %></a></th>
+                        <th><a class="<%= TableSort.headerClass("specialization", sortKey) %>" href="<%= ctx %>/admin/doctors?sort=specialization&dir=<%= TableSort.nextDir("specialization", sortKey, sortDir) %>">Specialization<%= TableSort.indicator("specialization", sortKey, sortDir) %></a></th>
                         <th>Contact</th>
                         <th>Email</th>
-                        <th>Status</th>
+                        <th><a class="<%= TableSort.headerClass("status", sortKey) %>" href="<%= ctx %>/admin/doctors?sort=status&dir=<%= TableSort.nextDir("status", sortKey, sortDir) %>">Status<%= TableSort.indicator("status", sortKey, sortDir) %></a></th>
                         <th>Actions</th>
                     </tr>
                 </thead>
